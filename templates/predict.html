@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+ 
+<html>
+<head>
+    <title>Predict Crop Yield & Pest Risk</title>
+</head>
+<body>
+    <h2>Predict Crop Yield & Pest Risk</h2>
+    <form id="predictForm">
+        <label>Temperature:</label>
+        <input type="number" id="temperature" required><br><br>
+ 
+```
+    <label>Rainfall:</label>
+    <input type="number" id="rainfall" required><br><br>
+ 
+    <label>Humidity:</label>
+    <input type="number" id="humidity" required><br><br>
+ 
+    <label>Soil Moisture:</label>
+    <input type="number" id="soil_moisture" required><br><br>
+ 
+    <label>GDD:</label>
+    <input type="number" id="gdd" required><br><br>
+ 
+    <button type="submit">Predict</button>
+</form>
+ 
+<h3>Prediction Result:</h3>
+<div id="result"></div>
+ 
+<script>
+    const form = document.getElementById("predictForm");
+    form.addEventListener("submit", function(e) {
+        e.preventDefault();
+ 
+        const data = {
+            temperature: parseFloat(document.getElementById("temperature").value),
+            rainfall: parseFloat(document.getElementById("rainfall").value),
+            humidity: parseFloat(document.getElementById("humidity").value),
+            soil_moisture: parseFloat(document.getElementById("soil_moisture").value),
+            gdd: parseFloat(document.getElementById("gdd").value)
+        };
+ 
+        // Predict Crop Yield
+        fetch("/predict_yield", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(yieldResult => {
+            // Predict Pest Risk
+            fetch("/predict_pest", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(pestResult => {
+                const pestLabel = pestResult.pest_risk_label === 1 ? "High" : "Low";
+                document.getElementById("result").innerHTML = `
+                    <strong>Predicted Yield:</strong> ${yieldResult.predicted_yield.toFixed(2)} tons/ha<br>
+                    <strong>Pest Risk:</strong> ${pestLabel} (${pestResult.pest_risk_prob ? (pestResult.pest_risk_prob*100).toFixed(1) + '%' : 'N/A'})
+                `;
+            })
+            .catch(error => {
+                console.error("Error predicting pest risk:", error);
+                document.getElementById("result").innerHTML = "Error predicting pest risk.";
+            });
+        })
+        .catch(error => {
+            console.error("Error predicting yield:", error);
+            document.getElementById("result").innerHTML = "Error predicting yield.";
+        });
+    });
+</script>
+```
+ 
+</body>
+</html>
+ 
